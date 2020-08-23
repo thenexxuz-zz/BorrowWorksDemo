@@ -1,0 +1,28 @@
+index:
+    path: /
+    controller: App\Controller\WelcomeController::index
+
+joke_list:
+  path: /api
+  controller: App\Controller\JokeController::index
+  methods: [GET]
+
+joke_create:
+  path: /api
+  controller: App\Controller\JokeController::create
+  methods: [POST]
+
+joke_show:
+  path: /api/{id}
+  controller: App\Controller\JokeController::show
+  methods: [GET]
+
+joke_update:
+  path: /api/{id}
+  controller: App\Controller\JokeController::update
+  methods: [PUT]
+
+joke_delete:
+  path: /api/{id}
+  controller: App\Controller\JokeController::delete
+  methods: [DELETE]
