@@ -6,8 +6,16 @@ use App\Form\Type\JokeType;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Class JokeController
+ * @package App\Controller
+ */
 class JokeController extends AbstractApiController
 {
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function index(Request $request): Response
     {
         $filter = $request->get('filter');
@@ -66,6 +74,10 @@ class JokeController extends AbstractApiController
         return $this->respond($response);
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     */
     public function create(Request $request): Response
     {
         $form = $this->buildForm(JokeType::class);
@@ -83,12 +95,22 @@ class JokeController extends AbstractApiController
         return $this->respond($joke, Response::HTTP_CREATED);
     }
 
+    /**
+     * @param Request $request
+     * @param int $id
+     * @return Response
+     */
     public function show(Request $request, int $id)
     {
         $joke = $this->getDoctrine()->getRepository(Joke::class)->find($id);
         return $this->respond($joke);
     }
 
+    /**
+     * @param Request $request
+     * @param int $id
+     * @return Response
+     */
     public function update(Request $request, int $id)
     {
         $entityManager = $this->getDoctrine()->getManager();
@@ -109,6 +131,11 @@ class JokeController extends AbstractApiController
         return $this->respond($joke, Response::HTTP_ACCEPTED);
     }
 
+    /**
+     * @param Request $request
+     * @param int $id
+     * @return Response
+     */
     public function delete(Request $request, int $id)
     {
         $entityManager = $this->getDoctrine()->getManager();

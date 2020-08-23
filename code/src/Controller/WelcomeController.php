@@ -4,6 +4,10 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Class WelcomeController
+ * @package App\Controller
+ */
 class WelcomeController extends AbstractController
 {
     public function index(): Response
