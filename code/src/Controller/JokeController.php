@@ -10,8 +10,19 @@ class JokeController extends AbstractApiController
 {
     public function index(Request $request): Response
     {
-
-        $jokes = $this->getDoctrine()->getRepository(Joke::class)->findAll();
+        $filter = $request->get('filter');
+        if (!is_null($filter)) {
+            $f = '%' . $filter . '%';
+            $entityManager = $this->getDoctrine()->getManager();
+            $query = $entityManager->createQuery(
+                'SELECT j
+                FROM App\Entity\Joke j
+                WHERE j.punchline like :filter'
+            )->setParameter('filter', $f);
+            $jokes = $query->getResult();
+        } else {
+            $jokes = $this->getDoctrine()->getRepository(Joke::class)->findAll();
+        }
 
         if (filter_var($request->get('random'), FILTER_VALIDATE_BOOLEAN)) {
             $jokes = $jokes[rand(0, count($jokes) - 1)];
@@ -49,7 +60,9 @@ class JokeController extends AbstractApiController
             'jokesPerPage' => $perPage,
             'total' => $qty,
         ];
-
+        if (!is_null($filter)) {
+            $response['filter'] = $filter;
+        }
         return $this->respond($response);
     }
 
