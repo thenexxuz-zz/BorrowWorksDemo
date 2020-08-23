@@ -1,6 +1,10 @@
 <?php
 namespace App\Controller;
 
+
+use Nelmio\ApiDocBundle\Annotation\Model;
+use OpenApi\Annotations as OA;
+use Symfony\Component\Routing\Annotation\Route;
 use App\Entity\Joke;
 use App\Form\Type\JokeType;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,8 +17,51 @@ use Symfony\Component\HttpFoundation\Response;
 class JokeController extends AbstractApiController
 {
     /**
-     * @param Request $request
-     * @return Response
+     * Returns multiple jokes
+     *
+     * @OA\Parameter(
+     *     name="page",
+     *     in="query",
+     *     description="The page number (Default page is 1)"
+     * )
+     * @OA\Parameter(
+     *     name="perPage",
+     *     in="query",
+     *     description="Jokes per page (Default Jokes per page is 5)"
+     * )
+     * @OA\Parameter(
+     *     name="qty",
+     *     in="query",
+     *     description="Max number of Jokes to return (Default is to return all Jokes)"
+     * )
+     * @OA\Parameter(
+     *     name="random",
+     *     in="query",
+     *     description="Returns one random Joke"
+     * )
+     * @OA\Parameter(
+     *     name="filter",
+     *     in="query",
+     *     description="Filters Jokes based on string given"
+     * )
+     * @OA\Response(
+     *     response=200,
+     *     description="Returns multiple jokes",
+     *     @OA\MediaType(
+     *         mediaType="application/json",
+     *         @OA\Schema(
+     *             @OA\Property(
+     *                 property="jokes",
+     *                 type="array",
+     *                 @OA\Items(ref=@Model(type=Joke::class))
+     *             ),
+     *             @OA\Property(property="page", type="integer"),
+     *             @OA\Property(property="jokesPerage", type="integer"),
+     *             @OA\Property(property="total", type="integer"),
+     *             @OA\Property(property="filter", type="string", description="optional"),
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): Response
     {
@@ -75,8 +122,41 @@ class JokeController extends AbstractApiController
     }
 
     /**
-     * @param Request $request
-     * @return Response
+     * Create a Joke
+     *
+     * @OA\Post(
+     *     @OA\RequestBody(
+     *         description="",
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="punchline",
+     *                     type="string"
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     *
+     * @OA\Response(
+     *     response=201,
+     *     description="Create a Joke",
+     *     @OA\MediaType(
+     *         mediaType="application/json",
+     *         @OA\Schema(ref=@Model(type=Joke::class))
+     *     )
+     * )
+     *
+     * @OA\Response(
+     *     response=417,
+     *     description="Required attribute 'punchline' not provided",
+     *     @OA\MediaType(
+     *         mediaType="application/json"
+     *     )
+     * )
      */
     public function create(Request $request): Response
     {
@@ -84,7 +164,7 @@ class JokeController extends AbstractApiController
         $form->handleRequest($request);
 
         if (!$form->isSubmitted() || !$form->isValid()) {
-            return $this->respond("Required attribute 'punchline' not provided", Response::HTTP_BAD_REQUEST);
+            return $this->respond("Required attribute 'punchline' not provided", Response::HTTP_EXPECTATION_FAILED);
         }
 
         /** @var Joke $joke */
@@ -96,20 +176,83 @@ class JokeController extends AbstractApiController
     }
 
     /**
-     * @param Request $request
-     * @param int $id
-     * @return Response
+     * Return Joke by ID
+     *
+     * @OA\Parameter(
+     *     name="id",
+     *     in="path",
+     *     description="ID of Jokes to return"
+     * )
+     *
+     * @OA\Response(
+     *     response=200,
+     *     description="Return Joke by ID",
+     *     @OA\MediaType(
+     *         mediaType="application/json",
+     *         @OA\Schema(ref=@Model(type=Joke::class))
+     *     )
+     * )
+     *
+     * @OA\Response(
+     *     response=404,
+     *     description="Joke with ID not found",
+     * )
      */
     public function show(Request $request, int $id)
     {
         $joke = $this->getDoctrine()->getRepository(Joke::class)->find($id);
+
+        if (!$joke) {
+            return $this->respond("No joke found for ID:" . $id, Response::HTTP_NOT_FOUND);
+        }
+
         return $this->respond($joke);
     }
 
     /**
-     * @param Request $request
-     * @param int $id
-     * @return Response
+     * Update Joke by ID
+     *
+     * @OA\Parameter(
+     *     name="id",
+     *     in="path",
+     *     description="ID of Jokes to update"
+     * )
+     *
+     * @OA\Put(
+     *     @OA\RequestBody(
+     *         description="",
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="punchline",
+     *                     type="string"
+     *                 )
+     *             )
+     *         )
+     *     )
+     * )
+     *
+     * @OA\Response(
+     *     response=202,
+     *     description="Update Joke by ID",
+     *     @OA\MediaType(
+     *         mediaType="application/json",
+     *         @OA\Schema(ref=@Model(type=Joke::class))
+     *     )
+     * )
+     *
+     * @OA\Response(
+     *     response=404,
+     *     description="Joke with ID not found",
+     * )
+     *
+     * @OA\Response(
+     *     response=417,
+     *     description="Required attribute 'punchline' not provided",
+     * )
      */
     public function update(Request $request, int $id)
     {
@@ -121,7 +264,7 @@ class JokeController extends AbstractApiController
         }
 
         $decodedJoke = json_decode($request->getContent(),true);
-        if (array_key_exists('punchline', $decodedJoke)) {
+        if (!is_null($decodedJoke) && array_key_exists('punchline', $decodedJoke)) {
             $joke->setPunchline($decodedJoke['punchline']);
             $entityManager->flush();
         } else {
@@ -132,6 +275,24 @@ class JokeController extends AbstractApiController
     }
 
     /**
+     * Delete Joke by ID
+     *
+     * @OA\Parameter(
+     *     name="id",
+     *     in="path",
+     *     description="ID of Jokes to delete"
+     * )
+     *
+     * @OA\Response(
+     *     response=202,
+     *     description="Joke with ID deleted",
+     * )
+     *
+     * @OA\Response(
+     *     response=404,
+     *     description="Joke with ID not found",
+     * )
+     *
      * @param Request $request
      * @param int $id
      * @return Response
@@ -140,6 +301,11 @@ class JokeController extends AbstractApiController
     {
         $entityManager = $this->getDoctrine()->getManager();
         $joke = $entityManager->getRepository(Joke::class)->find($id);
+
+        if (!$joke) {
+            return $this->respond("No joke found for ID:" . $id, Response::HTTP_NOT_FOUND);
+        }
+
         $entityManager->remove($joke);
         $entityManager->flush();
 
